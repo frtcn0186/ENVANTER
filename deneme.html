@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telefon Kamerası ile Barkod Okuma</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        #scanner-container { max-width: 400px; margin: 0 auto; border: 1px solid #ccc; }
+        video { width: 100%; height: auto; display: block; }
+        input[type="text"] { width: 90%; padding: 10px; margin-top: 20px; font-size: 16px; border: 2px solid #333; }
+        .success { color: green; font-weight: bold; margin-top: 10px; }
+        .error { color: red; margin-top: 10px; }
+    </style>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+</head>
+<body>
+
+    <h1>Barkod/QR Kod Okuyucu</h1>
+    <div id="scanner-container">
+        <video id="video"></video>
+    </div>
+
+    <input type="text" id="result" placeholder="Okutulan Değer Buraya Gelecek" readonly>
+    <p class="success" id="message"></p>
+    <p class="error" id="error-message"></p>
+
+    <script>
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+        const videoElement = document.getElementById('video');
+        const resultInput = document.getElementById('result');
+        const messageElement = document.getElementById('message');
+        const errorMessageElement = document.getElementById('error-message');
+
+        // Tarayıcı ve kamera başlatma
+        function startScanning() {
+            errorMessageElement.textContent = 'Kamera başlatılıyor...';
+            
+            codeReader.listVideoInputDevices()
+                .then((videoInputDevices) => {
+                    if (videoInputDevices.length) {
+                        const deviceId = videoInputDevices[videoInputDevices.length - 1].deviceId;
+                        
+                        codeReader.decodeFromVideoDevice(deviceId, 'video', (result, err) => {
+                            if (result) {
+                                console.log(result);
+                                resultInput.value = result.text;
+                                messageElement.textContent = 'Kod başarıyla okundu: ' + result.text;
+                                errorMessageElement.textContent = '';
+                                codeReader.reset();
+                            }
+                            if (err && !(err instanceof ZXing.NotFoundException)) {
+                                console.error(err);
+                            }
+                        });
+                        
+                        errorMessageElement.textContent = 'Lütfen kamerayı QR koda tutun.';
+                        
+                    } else {
+                        errorMessageElement.textContent = 'Hata: Cihazınızda kamera bulunamadı.';
+                    }
+                })
+                .catch((err) => {
+                    console.error(err);
+                    errorMessageElement.textContent = 'Kamera başlatılırken hata oluştu. Lütfen izinleri kontrol edin.';
+                });
+        }
+
+        // Sayfa yüklendiğinde taramayı başlat
+        startScanning();
+
+        // Sayfadan çıkıldığında kamera kullanımını durdur
+        window.onbeforeunload = () => {
+            codeReader.reset();
+        };
+    </script>
+</body>
+</html>
