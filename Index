@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>KDH Envanter Kayıt Sistemi</title>
+    <style>
+        /* Genel Stil Ayarları */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
+        #mainContainer { background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); max-width: 600px; width: 95%; margin-top: 20px; }
+        h1 { text-align: center; color: #007bff; font-size: 28px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; color: #495057; font-size: 14px; }
+        input[type="text"], input[type="number"], select, textarea, input[type="date"] { /* input[type="date"] eklendi */
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ced4da; 
+            box-sizing: border-box; 
+            border-radius: 6px; 
+            margin-top: 5px; 
+        }
+        
+        /* Buton Stilleri */
+        .submit-button { padding: 14px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 6px; width: 100%; font-size: 16px; font-weight: bold; transition: background-color 0.3s, opacity 0.3s; margin-top: 20px; }
+        .submit-button:hover:not(:disabled) { background-color: #218838; }
+        .submit-button:disabled { background-color: #6c757d; cursor: not-allowed; opacity: 0.7; }
+        .selection-button { display: block; width: 100%; padding: 15px 20px; margin-bottom: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background-color 0.3s; }
+        .bilgisayar-secim { background-color: #007bff; color: white; }
+        .bilgisayar-secim:hover { background-color: #0056b3; }
+        .yazici-secim { background-color: #ffc107; color: #343a40; }
+        .yazici-secim:hover { background-color: #e0a800; }
+        .back-button { background-color: #6c757d; color: white; margin-top: 10px; }
+        .back-button:hover { background-color: #5a6268; }
+
+        /* Mesaj ve Düzen */
+        #sonucMesaji, .sonucMesaji { text-align: center; margin-top: 20px; font-weight: bold; font-size: 1.1em; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .failure { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background-color: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+        .diger-marka-input { margin-top: 10px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div id="mainContainer">
+        
+        <div id="anaSayfa">
+            <h1>KDH ENVANTER KAYIT SEÇİMİ</h1>
+            <button class="selection-button bilgisayar-secim" onclick="showForm('bilgisayar')">
+                💻 BİLGİSAYAR ENVANTERİ KAYDET
+            </button>
+            <button class="selection-button yazici-secim" onclick="showForm('yazici')">
+                🖨️ YAZICI / BARKOD ENVANTERİ KAYDET
+            </button>
+        </div>
+
+        <div id="bilgisayarFormuContainer" style="display:none;">
+            <h1 id="formTitle">BİLGİSAYAR ENVANTER KAYIT FORMU</h1>
+            <form id="bilgisayarForm">
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bulundugu_yer">BULUNDUĞU YER * (A Sütunu)</label>
+                        <input type="text" id="bulundugu_yer" name="bulundugu_yer" required placeholder="Kat/Oda Numarası">
+                    </div>
+                    <div class="form-group">
+                        <label for="demirbas_numarasi">DEMİRBAŞ NUMARASI * (E Sütunu)</label>
+                        <input type="text" id="demirbas_numarasi" name="demirbas_numarasi" required placeholder="Örn: E123456" maxlength="15">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="marka">MARKA * (B Sütunu)</label>
+                        <select id="marka" name="marka" required onchange="checkOtherBrand(this.value)">
+                            <option value="">Lütfen Seçiniz</option>
+                            <option value="DELL">DELL</option>
+                            <option value="HP">HP</option>
+                            <option value="TECHNOPC">TECHNOPC</option>
+                            <option value="ACER">ACER</option>
+                            <option value="FUJİTSU">FUJİTSU</option>
+                            <option value="LENOVO">LENOVO</option>
+                            <option value="DİĞER">DİĞER</option>
+                        </select>
+                        <input type="text" id="marka_diger" name="marka_diger" class="diger-marka-input" placeholder="Lütfen Markayı Belirtiniz" style="display: none;">
+                    </div>
+                    <div class="form-group">
+                        <label for="model">MODEL * (C Sütunu)</label>
+                        <input type="text" id="model" name="model" required placeholder="Örn: OptiPlex 3080">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="seri">SERİ NO (D Sütunu)</label>
+                        <input type="text" id="seri" name="seri" placeholder="Seri Numarası">
+                    </div>
+                    <div class="form-group">
+                        <label for="isletim_sistemi">İŞLETİM SİSTEMİ (F Sütunu)</label>
+                        <select id="isletim_sistemi" name="isletim_sistemi" required>
+                            <option value="">Lütfen Seçiniz</option>
+                            <option value="WİN 11">WİN 11</option>
+                            <option value="WİN 10">WİN 10</option>
+                            <option value="WİN 8">WİN 8</option>
+                            <option value="WİN 7">WİN 7</option>
+                            <option value="DİĞER/YOK">DİĞER/YOK</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="islemci">İŞLEMÇİ (G Sütunu)</label>
+                        <input type="text" id="islemci" name="islemci" placeholder="Örn: i5-10. Nesil">
+                    </div>
+                    <div class="form-group">
+                        <label for="ek_aksamlar">EK AKSAMLAR (H Sütunu)</label>
+                        <input type="text" id="ek_aksamlar" name="ek_aksamlar" placeholder="Örn: Monitör, Klavye, Mouse">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="alinma_tarihi">ALINMA TARİHİ (I Sütunu)</label>
+                        <input type="date" id="alinma_tarihi" name="alinma_tarihi">
+                    </div>
+                    <div class="form-group">
+                        <label for="garanti">GARANTİ (J Sütunu)</label>
+                        <input type="text" id="garanti" name="garanti" placeholder="Örn: Var, 2026/05">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="ram">RAM (K Sütunu)</label>
+                        <input type="text" id="ram" name="ram" placeholder="Örn: 8GB">
+                    </div>
+                    <div class="form-group">
+                        <label for="ip">IP ADRESİ (L Sütunu)</label>
+                        <input type="text" id="ip" name="ip" placeholder="Örn: 192.168.1.10">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="aciklama">AÇIKLAMA (N Sütunu - Maks. 160 Karakter)</label>
+                    <textarea id="aciklama" name="aciklama" rows="3" placeholder="Önemli notlar, güncellemeler, arızalar." maxlength="160"></textarea>
+                </div>
+                
+                <button type="submit" class="submit-button" id="bilgisayarSubmitButton">BİLGİSAYAR ENVANTERİNİ KAYDET</button>
+                <button type="button" class="selection-button back-button" onclick="showForm('ana')">GERİ DÖN</button>
+                <p style="text-align: center; font-size: 0.9em; color: #888; margin-top: 10px;">* Kayıt Tarihi (M Sütunu) otomatik doldurulacaktır.</p>
+
+            </form>
+            <p id="bilgisayarSonucMesaji" class="sonucMesaji"></p>
+        </div>
+
+        <div id="yaziciFormuContainer" style="display:none;">
+            <h1>KDH YAZICI ENVANTER KAYDI</h1>
+            <form id="yaziciForm">
+                <div class="form-group">
+                    <label for="alt_cihaz_turu">CİHAZ TÜRÜ * (A Sütunu)</label>
+                    <select id="alt_cihaz_turu" name="alt_cihaz_turu" required>
+                        <option value="">Lütfen Seçiniz</option>
+                        <option value="Yazıcı">Yazıcı</option>
+                        <option value="Barkod Cihazı">Barkod Cihazı</option>
+                        <option value="Diğer">Diğer</option>
+                    </select>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="yazici_seri_no">SERİ NO * (B Sütunu)</label>
+                        <input type="text" id="yazici_seri_no" name="yazici_seri_no" required placeholder="Cihazın Seri Numarası" maxlength="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="yazici_bulundugu_yer">BULUNDUĞU YER * (C Sütunu)</label>
+                        <input type="text" id="yazici_bulundugu_yer" name="yazici_bulundugu_yer" required placeholder="Kat/Oda Numarası">
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="yazici_marka">MARKA * (D Sütunu)</label>
+                        <input type="text" id="yazici_marka" name="yazici_marka" required placeholder="Örn: HP, Canon, Zebra">
+                    </div>
+                    <div class="form-group">
+                        <label for="yazici_model">MODEL * (E Sütunu)</label>
+                        <input type="text" id="yazici_model" name="yazici_model" required placeholder="Örn: LaserJet Pro M102a">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="yazici_aciklama">AÇIKLAMA (F Sütunu - Maks. 160 Karakter)</label>
+                    <textarea id="yazici_aciklama" name="yazici_aciklama" rows="3" placeholder="Önemli notlar, durum güncellemeleri, arızalar." maxlength="160"></textarea>
+                </div>
+                
+                <button type="submit" class="submit-button" id="yaziciSubmitButton">YAZICI ENVANTERİNİ KAYDET</button>
+                <button type="button" class="selection-button back-button" onclick="showForm('ana')">GERİ DÖN</button>
+                <p style="text-align: center; font-size: 0.9em; color: #888; margin-top: 10px;">* Tarih (H Sütunu) otomatik doldurulacaktır.</p>
+
+            </form>
+            <p id="yaziciSonucMesaji" class="sonucMesaji"></p>
+        </div>
+        
+    </div>
+
+    <script>
+        // =============================================
+        // APPS SCRIPT URL'LERİ
+        // =============================================
+        // 🚨 Bu URL'leri kendi yayınlanmış Apps Script Web Uygulaması URL'leriniz ile DEĞİŞTİRİN!
+        const BILGISAYAR_DGS_URL = "https://script.google.com/macros/s/AKfycbwOOUSX48j-62MsDpdxuOmTHcQxAYzuFAgPfsf0D7GCJablwbQcyy72XPPEPqVStcOA/exec"; 
+        const YAZICI_DGS_URL = "https://script.google.com/macros/s/AKfycbxsh52Y5s8G0oPlgJeXbXpCSVxYZp2Mi36DJpxACp7xPVeofJLV_vCQ0BVWuVzdi5Bn/exec"; 
+        
+        // =============================================
+        // SAYFA YÖNETİMİ
+        // =============================================
+        function showForm(formType) {
+            document.getElementById('anaSayfa').style.display = 'none';
+            document.getElementById('bilgisayarFormuContainer').style.display = 'none';
+            document.getElementById('yaziciFormuContainer').style.display = 'none';
+
+            if (formType === 'bilgisayar') {
+                document.getElementById('bilgisayarFormuContainer').style.display = 'block';
+            } else if (formType === 'yazici') {
+                document.getElementById('yaziciFormuContainer').style.display = 'block';
+            } else { // 'ana' veya varsayılan
+                document.getElementById('anaSayfa').style.display = 'block';
+            }
+            // Sayfa değişiminde sonucu sıfırla
+            document.querySelectorAll('.sonucMesaji').forEach(el => {
+                el.textContent = '';
+                el.className = 'sonucMesaji';
+            });
+        }
+        
+        // İlk yüklemede Ana Sayfayı göster
+        showForm('ana'); 
+
+        // =============================================
+        // BİLGİSAYAR FORM İŞLEMLERİ
+        // =============================================
+        function checkOtherBrand(value) {
+            const digerInput = document.getElementById('marka_diger');
+            digerInput.style.display = (value === 'DİĞER') ? 'block' : 'none';
+            digerInput.required = (value === 'DİĞER');
+            if (value !== 'DİĞER') {
+                digerInput.value = ''; 
+            }
+        }
+
+        document.getElementById('bilgisayarForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); 
+            const form = e.target;
+            const submitButton = document.getElementById('bilgisayarSubmitButton');
+            const sonucMesaji = document.getElementById('bilgisayarSonucMesaji');
+            const formData = new FormData(form);
+
+            // Özel 'Diğer Marka' kontrolü ve genel zorunlu alan kontrolü
+            if(!form.checkValidity() || (formData.get('marka') === 'DİĞER' && !formData.get('marka_diger'))) {
+                sonucMesaji.textContent = "❌ Lütfen tüm yıldızlı alanları doldurunuz veya 'Diğer' marka adını belirtiniz.";
+                sonucMesaji.className = 'failure sonucMesaji';
+                return;
+            }
+
+            submitButton.disabled = true;
+            sonucMesaji.textContent = "⚙️ Kayıt verileri sunucuya gönderiliyor...";
+            sonucMesaji.className = 'loading sonucMesaji';
+
+            try {
+                const response = await fetch(BILGISAYAR_DGS_URL, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors' 
+                });
+                
+                // no-cors modu nedeniyle yanıtı detaylı kontrol edemiyoruz, başarılı kabul et
+                sonucMesaji.textContent = "✅ BİLGİSAYAR KAYDI Başarıyla Tamamlandı! (Sheets dosyanızı kontrol ediniz)";
+                sonucMesaji.className = 'success sonucMesaji';
+                
+                form.reset(); 
+                checkOtherBrand(''); 
+
+            } catch (error) {
+                sonucMesaji.textContent = `❌ KRİTİK HATA: Bağlantı kurulamadı. URL'yi kontrol edin.`;
+                sonucMesaji.className = 'failure sonucMesaji';
+                console.error('Kritik Hata:', error);
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+
+        // =============================================
+        // YAZICI FORM İŞLEMLERİ
+        // =============================================
+        document.getElementById('yaziciForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); 
+            const form = e.target;
+            const submitButton = document.getElementById('yaziciSubmitButton');
+            const sonucMesaji = document.getElementById('yaziciSonucMesaji');
+            const formData = new FormData(form);
+
+            if(!form.checkValidity()) {
+                sonucMesaji.textContent = "❌ Lütfen tüm yıldızlı (*) alanları doldurunuz.";
+                sonucMesaji.className = 'failure sonucMesaji';
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Kaydediliyor...';
+            sonucMesaji.textContent = "⚙️ Verileriniz sunucuya gönderiliyor...";
+            sonucMesaji.className = 'loading sonucMesaji';
+
+            try {
+                const response = await fetch(YAZICI_DGS_URL, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                const text = await response.text();
+                let data;
+                
+                try {
+                    data = JSON.parse(text);
+                } catch (e) { 
+                    data = { result: 'success' };
+                }
+
+                if (data.result === 'error') {
+                    sonucMesaji.textContent = `❌ YAZICI KAYDI Başarısız: ${data.message}`;
+                    sonucMesaji.className = 'failure sonucMesaji';
+                } else {
+                    sonucMesaji.textContent = "✅ YAZICI KAYDI Başarıyla Tamamlandı! (Sheets dosyanızı kontrol ediniz)";
+                    sonucMesaji.className = 'success sonucMesaji';
+                    form.reset(); 
+                }
+            } catch (error) {
+                sonucMesaji.textContent = "❌ Gönderim sırasında bir hata oluştu. (URL'yi kontrol edin)";
+                sonucMesaji.className = 'failure sonucMesaji';
+                console.error('Hata:', error);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'YAZICI ENVANTERİNİ KAYDET';
+            }
+        });
+    </script>
+
+</body>
+</html>
